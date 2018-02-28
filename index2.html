@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+  	<head>
+	    <title>Simple Map</title>
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta charset="utf-8">
+	    <link rel="stylesheet" type="text/css" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	    <style>
+	      	/* Always set the map height explicitly to define the size of the div
+	       	* element that contains the map. */
+	      	#map {
+	        	height: 100%;
+	        	z-index: 999;
+	      	}
+	      	/* Optional: Makes the sample page fill the window. */
+	      	html, body {
+		        height: 100%;
+		        margin: 0;
+		        padding: 0;
+		   	}
+		   	#imgs{
+            /*height:60px;*/
+            width: 100%;
+            position: absolute;
+            bottom:120px;
+            /*background-color: #777;*/
+            z-index: 1000;
+	        }
+	        #imgs #cc{
+	            height:60px;
+	            width: 100%;
+	            text-align: center;
+	            /*background-color: #999;*/
+	        }
+	        #imgs .img{
+	            height:60px;
+	            width:60px;
+	            background-color: #f5f5f5;
+	            border-radius: 30px;
+	            display: inline-block;
+	        }
+	        #img1{position: relative;left:15px;bottom: 25px;}
+	        #img2{position: relative;left:45px;bottom: 60px;}
+	        #img3{position: relative;left:-30px;bottom: -60px;height:90px !important;
+	            width:90px !important;border-radius: 45px !important;}
+	        #img4{position: relative;left:-15px;bottom: 25px;}
+	        .img span{
+	            position: absolute;
+	            font-size: 30px;
+	            left:15px;
+	            top:15px;
+	            display: inline-block;
+	        }
+	        #img3 span{
+	            font-size: 60px !important;
+	            left:14px;
+	            top:15px;
+	        }
+	        #content{
+		      /*border-radius: 10px;*/
+		      height: 105px;
+		      width: 300px;
+		      /*padding: 20px;*/
+		      color: #fff;
+		      margin: 0 auto;
+		    }
+		    .layer-small{
+		      height:40px;
+		      width: 150px;
+		      display: block;
+		      float: right;
+		    }
+		    .bg{
+		      background-color: #2e2e2e;
+		      padding: 5px;
+		      height:32px;
+		      width:32px;
+		      display: inline-block;
+		    }
+		    .bg span{
+		      display: inline-block;
+		      /*line-height: */
+		      margin:0 auto;
+		      padding-left: 4px;
+		      padding-top: 2px;
+		    }
+		    .bg-sm{
+		      display: inline-block;
+		      font-size: 9px;
+		      /*background-color: red;*/
+		      height:32px;
+		      width:70%;
+		      float:right;
+		      color:#000;
+		      /*padding: 1px;*/
+		    }
+		    .nu{
+		      font-size: 14px;
+		      color:#ED8F42;
+		    }
+		    #detail{
+		      font-size: 18px;
+		      color:#ED8F42;
+		      text-align: center;
+		    }
+		    #layer-bg{
+		    	background-color: #000;
+		    	z-index: 8888;
+		    	width: 100%;
+		    	height: 100%;
+		    	position: absolute;
+		    	left:0px;
+		    	top:0px;
+		    	opacity:0.8;
+		    }
+		    table{
+		    	position: absolute;
+		    	left:0px;
+		    	top:0px;
+		    	z-index: 8889;
+		    	color:#fff;
+		    	opacity: 1;
+		    	width: 100%;
+		    }
+		    table .g-right{
+		    	width: 120px;
+		    }
+		    table td{
+		    	padding:3px 15px;
+		    	font-size: 16px;
+		    }
+		    input,select{
+		    	color: #000;
+		    	border:0;
+		    	height: 100%;
+		    }
+		    input{
+		    	/*height:100%;*/
+		    	text-align: center;
+		    	width: 100%;
+		    }
+		    .g-green{
+		    	color: #00FF00;
+		    }
+		    .g-yellow{
+		    	color: #DDB340;
+		    }
+		    .xxx{
+		    	font-size: 30px;
+		    	padding-top: 10px;
+		    }
+	    </style>
+  	</head>
+  	<body>
+	    <div id="map"></div>
+	    <div id="imgs">
+	        <div id="cc"><div class="img" id="img1"><span class="glyphicon glyphicon-repeat"></span></div><div class="img" id="img2"><span class="glyphicon glyphicon-remove"></span></div><div class="img" id="img3"><span class="glyphicon glyphicon-map-marker"></span></div><div class="img" id="img4"><span class="glyphicon glyphicon-ok"></span></div></div>
+	    </div>
+	    <div id="layer-bg" class="tan hide"></div>
+    	<table class="tan hide">
+    		<tr>
+    			<td colspan="3" class="text-center">-------------- 投资与收益 ---------------</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">建筑类型</td>
+    			<td class="g-right">
+    				<select>
+    					<option value="1">工商业</option>
+    					<option value="2">农业</option>
+    					<option value="3">畜牧业</option>
+    				</select>
+    			</td>
+    		</tr>
+    		<tr>
+    			<td>装机容量</td>
+    			<td>每瓦成本</td>
+    			<td class="g-yellow g-right">投资成本</td>
+    		</tr>
+    		<tr>
+    			<td>582.00kWx</td>
+    			<td><input type="number" name="number" value="7"></td>
+    			<td class="g-yellow g-right">￥ 407.40万</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">安装面积(㎡)</td>
+    			<td class="g-right iarea">5529.00</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">辐照参数(kWh/kWp/年)</td>
+    			<td class="g-right">1171</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">年发电量(万度)</td>
+    			<td class="g-right">64.72</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">国家补贴(元/度)</td>
+    			<td class="g-right">￥ 0.42</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">地方补贴(元/度) - 上海市</td>
+    			<td class="g-right"><span><input type="number" name="number" value="0.25"></span></td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">初装补贴(元/瓦)</td>
+    			<td class="g-right"><input type="number" name="number" value="0"></td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">月收益</td>
+    			<td class="g-right">￥ 7.39万</td>
+    		</tr>
+    		<tr>
+    			<td class="first g-green" colspan="2">年总收益</td>
+    			<td class="g-green g-right">￥ 88.67万</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">年收益率(%)</td>
+    			<td class="g-right">21.77%</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">回本时间(年)</td>
+    			<td class="g-right">4.59</td>
+    		</tr>
+    		<tr>
+    			<td colspan="3" class="text-center">-------------- 碳足迹/年 ---------------</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">提供电力(户)</td>
+    			<td class="g-right">513.00</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">相当植树(棵)</td>
+    			<td class="g-right">363.00</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">节省燃煤(吨)</td>
+    			<td class="g-right">233.01</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">减少CO2(吨)</td>
+    			<td class="g-right">632.36</td>
+    		</tr>
+    		<tr>
+    			<td colspan="2">节省水(吨)</td>
+    			<td class="g-right">2588.98</td>
+    		</tr>
+    		<tr>
+    			<td colspan="3" class="text-center"><span class="glyphicon glyphicon-remove xxx"></span></td>
+    		</tr>
+    	</table>
+	    
+	    <script>
+	 		/*打开弹层*/
+ 			var tan = document.getElementsByClassName("tan");
+	 		function detail(){
+	 			tan[1].setAttribute("class","show tan");
+	 			tan[0].setAttribute("class","show tan");
+	 		}
+	 		/*关闭弹层*/
+	 		var xxx = document.getElementsByClassName("xxx");
+	 		xxx[0].addEventListener('click',function(){
+	 			tan[1].setAttribute("class","hide tan");
+	 			tan[0].setAttribute("class","hide tan");
+	 		});
+
+	      	/*标记事件*/
+	      	var points = [];
+	      	var latLngs = [];
+	      	var bermudaTriangle = null;
+	      	var map;
+	      	var markers = [];
+	      	var pos;
+	      	//初始化
+	      	function initMap() {
+			  	map = new google.maps.Map(document.getElementById('map'), {
+				    zoom: 19,
+				    center: {lat: 31.836682545801366, lng: 117.20806002616882 },
+				    mapTypeId: 'satellite',
+				    zoomControl: true,
+				    scaleControl: false,
+				    panControl:false,
+				    rotateControl: true,
+				    fullscreenControl: true,
+				    streetViewControl: false,
+				    mapTypeControl: true
+			  	});
+			  	// var infoWindow = new google.maps.InfoWindow({map: map});
+			  	pos = {
+		        	lat: 31.836682545801366,
+		        	lng: 117.20806002616882
+		      	};
+		      	map.setCenter(pos);
+			  	// Try HTML5 geolocation.
+			  	// if (navigator.geolocation) {
+				    // navigator.geolocation.getCurrentPosition(function(position) {
+				    //   	pos = {
+				    //     	lat: 31.836682545801366,
+				    //     	lng: 117.20806002616882
+				    //   	};
+
+				    //   	infoWindow.setPosition(pos);
+				    //   	infoWindow.setContent("你的当前位置");
+				    //   	map.setCenter(pos);
+				    // }, function(error) {
+				    //   	// handleLocationError(true, infoWindow, map.getCenter());
+				    // });
+		  		// } else {
+			    	// Browser doesn't support Geolocation
+				    // handleLocationError(false, infoWindow, map.getCenter());
+			  	// }
+
+				// function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+				//   	infoWindow.setPosition(pos);
+				//   	infoWindow.setContent(browserHasGeolocation ? 'Error: 地理位置服务失败' : 'Error: 您的浏览器不支持地理位置');
+				// }
+
+			  	//点击，重新绘制多边形
+			  	map.addListener('click', function(e) {
+			  		// console.log('新标注lat：'+e.latLng.lat());
+			  		// console.log('新标注lng：'+e.latLng.lng());
+			  		// console.log(e.latLng);
+			    	points.push({lat:e.latLng.lat(),lng:e.latLng.lng()});
+			    	latLngs.push(e.latLng);
+			  		drawPolygon(points,map);
+			    	placeMarker(e.latLng, map);
+			    	// console.log(points[0].lat);
+			    	// console.log(points[0].lng);
+			    	// console.log(points);
+			    	
+			  	});
+			}
+
+			//添加标注
+			function placeMarker(latLng, map) {
+				
+			  	var marker = new google.maps.Marker({
+				    position: latLng,
+				    map: map,
+				    draggable:true,
+				    title:"拽我试试!"
+			  	});
+
+			  	markers.push(marker);
+			  	// console.log(markers)
+			  	// map.panTo(latLng);
+
+			  	var dragPoint;
+				//拖放-开始
+			  	marker.addListener('dragstart', function(e) {
+			  		console.log('开始lat：'+e.latLng.lat());
+			  		console.log('开始lng：'+e.latLng.lng());
+			  		dragPoint = {lat:e.latLng.lat(),lng:e.latLng.lng()};
+			    	
+			  	});
+
+			  	//拖放-结束，重新绘制多边形
+			  	marker.addListener('dragend', function(e) {
+			  		// console.log(e.latLng);
+			  		console.log('结束lat：'+e.latLng.lat());
+			  		console.log('结束lng：'+e.latLng.lng());
+			    	for(var i = 0; i < points.length; i++){
+			    		if(points[i].lat == dragPoint.lat && points[i].lng == dragPoint.lng){
+			    			points[i].lat = e.latLng.lat();
+			    			points[i].lng = e.latLng.lng();
+			    			latLngs[i] = e.latLng;
+			    		}
+			    	}
+			    	drawPolygon(points,map);
+			  	});
+
+			  	//右击删除图标，重新绘制多边形
+			  	marker.addListener('rightclick', function(e) {
+			  		for(var i = 0; i < points.length; i++){
+			    		if(points[i].lat == e.latLng.lat() && points[i].lng == e.latLng.lng()){
+			    			points.splice(i,1);
+			    		}
+			    	}
+			    	for(var i = 0; i < latLngs.length; i++){
+			    		if(latLngs[i].lat == e.latLng.lat() && latLngs[i].lng == e.latLng.lng()){
+			    			latLngs.splice(i,1);
+			    		}
+			    	}
+			    	if(points.length < 3){
+			    		// 删除多边形
+			    		bermudaTriangle.setMap(null);
+			    		bermudaTriangle = null;
+			    	}else{
+			    		drawPolygon(points,map);
+			    	}
+			    	marker.setMap(null);
+			  	});
+			}
+
+			//点击逐个删除，删除最新的图标，重新绘制多边形
+			var img1 = document.getElementById("img1");
+			img1.addEventListener("click", function(e){
+		        points.pop();
+		        latLngs.pop();
+		        // console.log(points.length);
+		    	//删除图标,2步
+		    	(markers.pop()).setMap(null);
+		    	if(points.length == 2){
+		    		// 删除多边形
+		    		bermudaTriangle.setMap(null);
+		    		bermudaTriangle = null;
+		    	}else{
+		    		drawPolygon(points,map);
+		    	}
+
+		    });
+
+		    //点击全部删除，删除所有图标，删除多边形
+			var img2 = document.getElementById("img2");
+			img2.addEventListener("click", function(e){
+				// console.log(markers.length);
+		        points = [];
+		        latLngs = [];
+		    	//删除所有图标,2步
+		    	for(var i = 0; i < markers.length; i++){
+		    		markers[i].setMap(null);
+		        	// console.log(markers);
+		    	}
+		    	if(markers.length > 2){
+		    		// 删除多边形
+	    			bermudaTriangle.setMap(null);
+	    			bermudaTriangle = null;
+		    	}
+		    	markers = [];
+		        // console.log(points.length);
+		        // console.log(latLngs.length);
+		    	
+		    });
+			//手动定位
+			var img3 = document.getElementById("img3");
+			img3.addEventListener("click", function(e){
+				map.setCenter(pos);
+		    });
+
+			/**
+			* 画多边形、计算面积
+			* 条件：当图标数量 > 2,开始绘制	
+			*/
+			function drawPolygon(points,map)
+			{
+				if(points.length > 2){
+			    	// console.log(points.length);
+			    	if(bermudaTriangle){
+						// 删除多边形
+			    		bermudaTriangle.setMap(null);
+			    		bermudaTriangle = null;
+			    	}
+			  		bermudaTriangle = new google.maps.Polygon({
+					    paths: points,
+					    strokeColor: '#FF0000',
+					    strokeOpacity: 0.8,
+					    strokeWeight: 2,
+					    fillColor: '#FF0000',
+					    fillOpacity: 0.35
+				  	});
+				  	bermudaTriangle.setMap(map);	
+			  	}
+			}
+
+			//点击计算多边形面积
+			var img4 = document.getElementById("img4");
+			img4.addEventListener("click", function(e){
+		        //计算面积
+		        if(latLngs.length < 3){
+		        	alert("至少三个点才能计算面积哦~");
+		        	return;
+		        }
+			  	var path = bermudaTriangle.getPath();
+			  	// console.log(path);
+			  	var Area = google.maps.geometry.spherical.computeArea(path).toFixed(2);
+		        // console.log(Area);
+		        // alert("总面积：" + Area + "平方米");
+
+		        //显示信息窗口
+			  	var contentString = '<div id="content"><div class="layer-small"><div class="bg"><span class="glyphicon glyphicon-yen"></span></div><div class="bg-sm"><div class="nu">407.43万</div><div>总投资(元)</div></div></div><div class="layer-small"><div class="bg"><span class="glyphicon glyphicon-th"></span></div><div class="bg-sm"><div class="nu">582.00</div><div>总装机量(KW)</div></div></div><div class="layer-small"><div class="bg"><span class="glyphicon glyphicon-flash"></span></div><div class="bg-sm"><div class="nu">64.72万</div><div>年发电量(度)</div></div></div><div class="layer-small"><div class="bg"><span class="glyphicon glyphicon-move"></span></div><div class="bg-sm"><div class="nu">' + Area + '</div><div>面积(㎡)</div></div></div><div id="detail" onclick="detail();"><a></a>查看详情</div></div>';
+		     	var infowindow = new google.maps.InfoWindow({
+			    	content: contentString
+			  	});
+			  	infowindow.open(map, markers[0]);
+			  	var iarea = document.getElementsByClassName("iarea")[0].innerHTML = Area;
+		    });
+
+	    </script>
+	    <script src="http://maps.google.cn/maps/api/js?region=cn&language=zh-CN&key=AIzaSyDrMDVXxCpO742_KkMdVTYOc8S030XD3_8&libraries=geometry&callback=initMap" async defer></script>
+  	</body>
+</html>

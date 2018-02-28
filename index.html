@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<style type="text/css">
+		body, html,#allmap {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin:0;
+            font-family:"微软雅黑";
+        }
+        #imgs{
+            /*height:60px;*/
+            width: 100%;
+            position: absolute;
+            bottom:120px;
+            /*background-color: #777;*/
+        }
+        #imgs #cc{
+            margin: 0 auto;
+            height:60px;
+            width: 270px;
+            /*background-color: #999;*/
+        }
+        #imgs .img{
+            height:60px;
+            width:60px;
+            background-color: #f5f5f5;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        #img1{position: relative;left:15px;bottom: 25px;}
+        #img2{position: relative;left:45px;bottom: 60px;}
+        #img3{position: relative;left:-30px;bottom: -60px;height:90px !important;
+            width:90px !important;border-radius: 45px !important;}
+        #img4{position: relative;left:-15px;bottom: 25px;}
+        .img span{
+            position: absolute;
+            font-size: 30px;
+            left:15px;
+            top:15px;
+            display: inline-block;
+        }
+        #img3 span{
+            font-size: 60px !important;
+            left:15px;
+            top:15px;
+        }
+
+	</style>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=VBTSXF5Ew7qi3oniGRcWHyLwZ2Dl6Xcv"></script>
+	<title>百度地图中多边形覆盖物的面积计算</title>
+</head>
+<body>
+	<div id="allmap"></div>
+    <div id="imgs">
+        <div id="cc"><div class="img" id="img1"><span class="glyphicon glyphicon-repeat"></span></div><div class="img" id="img2"><span class="glyphicon glyphicon-remove"></span></div><div class="img" id="img3"><span class="glyphicon glyphicon-map-marker"></span></div><div class="img" id="img4"><span class="glyphicon glyphicon-ok"></span></div></div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+	// 百度地图API功能
+	var map = new BMap.Map("allmap",{mapType:BMAP_SATELLITE_MAP});
+
+    /*标注*/
+    var point = new BMap.Point(117.150454,31.837566);
+    map.centerAndZoom(point, 17);
+    
+    function addMarker(point, index = 0){  // 创建图标对象   
+        var myIcon = new BMap.Icon("http://api.map.baidu.com/img/markers.png", new BMap.Size(23, 25), {    
+            // 指定定位位置。   
+            // 当标注显示在地图上时，其所指向的地理位置距离图标左上    
+            // 角各偏移10像素和25像素。您可以看到在本例中该位置即是   
+            // 图标中央下端的尖角位置。    
+            anchor: new BMap.Size(10, 25),    
+            // 设置图片偏移。   
+            // 当您需要从一幅较大的图片中截取某部分作为标注图标时，您   
+            // 需要指定大图的偏移位置，此做法与css sprites技术类似。    
+            imageOffset: new BMap.Size(0, 0 - index * 25)   // 设置图片偏移    
+        });      
+        // 创建标注对象并添加到地图   
+        var marker = new BMap.Marker(point, {icon: myIcon});    
+        map.addOverlay(marker);    
+    }    
+
+
+    map.enableScrollWheelZoom();
+
+    var address = [];
+    var bMapPoints = [];
+    var polygon;
+    // console.log(typeof(address));
+    map.addEventListener("click", function(e){
+        var center = map.getCenter();
+        console.log(("当前位置为：" + e.point.lng + ", " + e.point.lat));
+        address.push([e.point.lng,e.point.lat]);
+        // console.log(address);
+        addMarker(new BMap.Point(e.point.lng,e.point.lat));
+        bMapPoints.push(new BMap.Point(address[address.length-1][0],address[address.length-1][1]));
+        // console.log(bMapPoints);
+        console.log(address.length);
+        if(address.length > 3){
+            map.removeOverlay(polygon);
+        }
+        polygon = new BMap.Polygon(bMapPoints, {strokeColor:"red", strokeWeight:2, strokeOpacity:0.8});  //创建多边形
+        map.addOverlay(polygon);   //绘制多边形
+	});
+
+    function calculator(){
+        if(address.length < 3){
+            if(address.length==2){
+                // var dd = map.getMapType();
+                var dd = 'ddddddddddddddddddddd';
+                console.log(dd);
+            }
+          console.log("不足以计算面积，请继续点击……");
+        }else{
+            console.log("ok,当前有"+address.length+"个位置参与计算");
+            setTimeout(function(){
+                console.log("该多边形的面积为："+getArea(polygon)+"平方米");
+            },1000);
+        }
+    }
+
+    var img4 = document.getElementById("img4");
+    console.log(img4);
+    img4.addEventListener("click", function(e){
+        console.log(2322222);
+        console.log(getArea(polygon));
+    });
+
+
+
+
+  	//计算多边形面积，参数是一个百度类型的多边形覆盖物
+  	function getArea(polygon){
+
+        // 检查类型：既不是百度类型的范围又不是数组类型的数据，直接返回0
+        if (!(polygon instanceof BMap.Polygon) && !(polygon instanceof Array)) {
+                return 0;
+        }
+
+         //如果是百度类型的，得到点集合，不是的话，另说。
+         var pts = new Array();
+         if (polygon instanceof BMap.Polygon) {
+              pts = polygon.getPath();
+         }
+
+         //判断数组的长度，如果是小于3的话，不构成面，无法计算面积
+         if (pts.length < 3) {
+                return 0;
+         }
+
+         var totalArea = 0;// 初始化总面积
+         var LowX = 0.0; 
+         var LowY = 0.0; 
+         var MiddleX = 0.0;
+         var MiddleY = 0.0;
+         var HighX = 0.0;
+         var HighY = 0.0;
+         var AM = 0.0;
+         var BM = 0.0;
+         var CM = 0.0;
+         var AL = 0.0;
+         var BL = 0.0;
+         var CL = 0.0;
+         var AH = 0.0;
+         var BH = 0.0;
+         var CH = 0.0;
+         var CoefficientL = 0.0;
+         var CoefficientH = 0.0;
+         var ALtangent = 0.0;
+         var BLtangent = 0.0;
+         var CLtangent = 0.0;
+         var AHtangent = 0.0;
+         var BHtangent = 0.0;
+         var CHtangent = 0.0;
+         var ANormalLine = 0.0;
+         var BNormalLine = 0.0;
+         var CNormalLine = 0.0;
+         var OrientationValue = 0.0;
+         var AngleCos = 0.0;
+         var Sum1 = 0.0;
+         var Sum2 = 0.0;
+         var Count2 = 0;
+         var Count1 = 0;
+         var Sum = 0.0;
+         var Radius = 6378137.0;// ,WGS84椭球半径
+         var Count = pts.length;
+      	for ( var i = 0; i < Count; i++) {
+            if (i == 0) {
+                LowX = pts[Count - 1].lng * Math.PI / 180;
+                LowY = pts[Count - 1].lat * Math.PI / 180;
+                MiddleX = pts[0].lng * Math.PI / 180;
+                MiddleY = pts[0].lat * Math.PI / 180;
+                HighX = pts[1].lng * Math.PI / 180;
+                HighY = pts[1].lat * Math.PI / 180;
+            } else if (i == Count - 1) {
+                LowX = pts[Count - 2].lng * Math.PI / 180;
+                LowY = pts[Count - 2].lat * Math.PI / 180;
+                MiddleX = pts[Count - 1].lng * Math.PI / 180;
+                MiddleY = pts[Count - 1].lat * Math.PI / 180;
+                HighX = pts[0].lng * Math.PI / 180;
+                HighY = pts[0].lat * Math.PI / 180;
+            } else {
+                LowX = pts[i - 1].lng * Math.PI / 180;
+                LowY = pts[i - 1].lat * Math.PI / 180;
+                MiddleX = pts[i].lng * Math.PI / 180;
+                MiddleY = pts[i].lat * Math.PI / 180;
+                HighX = pts[i + 1].lng * Math.PI / 180;
+                HighY = pts[i + 1].lat * Math.PI / 180;
+            }
+            AM = Math.cos(MiddleY) * Math.cos(MiddleX);
+            BM = Math.cos(MiddleY) * Math.sin(MiddleX);
+            CM = Math.sin(MiddleY);
+            AL = Math.cos(LowY) * Math.cos(LowX);
+            BL = Math.cos(LowY) * Math.sin(LowX);
+            CL = Math.sin(LowY);
+            AH = Math.cos(HighY) * Math.cos(HighX);
+            BH = Math.cos(HighY) * Math.sin(HighX);
+            CH = Math.sin(HighY);
+            CoefficientL = (AM * AM + BM * BM + CM * CM)/ (AM * AL + BM * BL + CM * CL);
+            CoefficientH = (AM * AM + BM * BM + CM * CM)/ (AM * AH + BM * BH + CM * CH);
+            ALtangent = CoefficientL * AL - AM;
+            BLtangent = CoefficientL * BL - BM;
+            CLtangent = CoefficientL * CL - CM;
+            AHtangent = CoefficientH * AH - AM;
+            BHtangent = CoefficientH * BH - BM;
+            CHtangent = CoefficientH * CH - CM;
+            AngleCos = (AHtangent * ALtangent + BHtangent * BLtangent + CHtangent* CLtangent)/ (Math.sqrt(AHtangent * AHtangent + BHtangent* BHtangent + CHtangent * CHtangent) * Math.sqrt(ALtangent * ALtangent + BLtangent* BLtangent + CLtangent * CLtangent));
+            AngleCos = Math.acos(AngleCos);
+            ANormalLine = BHtangent * CLtangent - CHtangent * BLtangent;
+            BNormalLine = 0 - (AHtangent * CLtangent - CHtangent* ALtangent);
+            CNormalLine = AHtangent * BLtangent - BHtangent * ALtangent;
+            if (AM != 0)
+                OrientationValue = ANormalLine / AM;
+            else if (BM != 0)
+                OrientationValue = BNormalLine / BM;
+            else
+                OrientationValue = CNormalLine / CM;
+            if (OrientationValue > 0) {
+                Sum1 += AngleCos;
+                Count1++;
+            } else {
+                Sum2 += AngleCos;
+                Count2++;
+            }
+        }
+
+        var tempSum1, tempSum2;
+        tempSum1 = Sum1 + (2 * Math.PI * Count2 - Sum2);
+        tempSum2 = (2 * Math.PI * Count1 - Sum1) + Sum2;
+        if (Sum1 > Sum2) {
+            if ((tempSum1 - (Count - 2) * Math.PI) < 1)
+                Sum = tempSum1;
+            else
+                Sum = tempSum2;
+        } else {
+            if ((tempSum2 - (Count - 2) * Math.PI) < 1)
+                Sum = tempSum2;
+            else
+                Sum = tempSum1;
+        }
+        totalArea = (Sum - (Count - 2) * Math.PI) * Radius * Radius;
+
+        return totalArea; // 返回总面积
+	}
+</script>

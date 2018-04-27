@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>判断一个点是否在一片区域内</title>
+	<style type="text/css">
+		body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+	</style>
+</head>
+<body>
+	<div id="allmap"></div>
+	<script src="http://api.map.baidu.com/api?v=2.0&ak=VBTSXF5Ew7qi3oniGRcWHyLwZ2Dl6Xcv"></script>
+	<script src="http://api.map.baidu.com/library/GeoUtils/1.2/src/GeoUtils_min.js"></script>
+	<!-- <script src="http://api.map.baidu.com/library/GeoUtils/1.2/docs/symbols/src/BMapLib_GeoUtils.js.html"></script> -->
+	<script>
+	    var polygon;
+	    var markers = [];
+
+		// 百度地图API功能
+		var map = new BMap.Map("allmap",{enableMapClick:false});    // 创建Map实例
+		map.centerAndZoom(new BMap.Point(116.404, 39.915), 11);  // 初始化地图,设置中心点坐标和地图级别
+
+		//添加地图类型控件
+		map.addControl(new BMap.MapTypeControl({
+			mapTypes:[
+	            BMAP_NORMAL_MAP,
+	            BMAP_HYBRID_MAP
+	        ]}));
+		map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+		// var mypoint = new BMap.Point(117.339937,31.870068);//定义一个坐标对象
+
+		// //初始化地图的中心位置
+	 	//    map.centerAndZoom(mypoint, 14);
+	 	map.centerAndZoom('合肥',11);
+		// 判断一个点是否在一片区域内
+		function isPointInPolygon(point){
+			var styleOptions = {
+		        strokeColor:"red",    //边线颜色。
+		        fillColor:"pink",      //填充颜色。当参数为空时，圆形将没有填充效果。
+		        strokeWeight: 1,       //边线的宽度，以像素为单位。
+		        strokeOpacity: 0.8,	   //边线透明度，取值范围0 - 1。
+		        fillOpacity: 0.6,      //填充的透明度，取值范围0 - 1。
+		        strokeStyle: 'solid' //边线的样式，solid或dashed。
+		    }
+		    var points = [];
+		    for (var i = markers.length - 1; i >= 0; i--) {
+		    	points.push(markers[i]["point"]);
+		    }
+		    var apolygon = new BMap.Polygon(points, styleOptions);
+			var lname="我的派送区域";
+			var msg = "";
+			map.addOverlay(new BMap.Marker(point));
+			if (BMapLib.GeoUtils.isPointInPolygon(point, apolygon)) {//如果点在区域内，返回true
+	            map.addOverlay(new BMap.Marker(point));
+	            msg = "在" + lname + "区域内";   
+	     	}else{
+	            map.addOverlay(new BMap.Marker(point));
+	            msg = "在" + lname + "区域外";   
+			}
+			var label = new BMap.Label(msg,{position:point,offset:new BMap.Size(0,0)});
+			map.addOverlay(label);
+		}
+		// isPointInPolygon(new BMap.Point(117.328937,31.886068));
+
+		/*添加图标*/
+		function addMarker(point, index = 0){  // 创建图标对象   
+	        var myIcon = new BMap.Icon("http://api.map.baidu.com/img/markers.png", new BMap.Size(23, 25), {    
+	            // 指定定位位置。   
+	            // 当标注显示在地图上时，其所指向的地理位置距离图标左上    
+	            // 角各偏移10像素和25像素。您可以看到在本例中该位置即是   
+	            // 图标中央下端的尖角位置。    
+	            anchor: new BMap.Size(10, 25),
+	            // 设置图片偏移。   
+	            // 当您需要从一幅较大的图片中截取某部分作为标注图标时，您   
+	            // 需要指定大图的偏移位置，此做法与css sprites技术类似。    
+	            imageOffset: new BMap.Size(0, 0 - index * 25)   // 设置图片偏移    
+	        });      
+	        // 创建标注对象并添加到地图 
+	        var marker = new BMap.Marker(point, {icon: myIcon}); 
+	        marker.location = markers.length - 1;
+	        marker.enableDragging();
+	        
+		  	//拖放-结束，重新绘制多边形
+	        marker.addEventListener('dragend',function(e){
+	        	var address = [e.point.lng,e.point.lat];
+				var point = new BMap.Point(e.point.lng,e.point.lat);
+				var location = this.location;
+				markers[location]["address"] = address;
+				markers[location]["point"] = point;
+	        	drawPolygon(markers,map);//重新绘制一个多边形
+	        });
+	        markers[markers.length - 1]["marker"] = marker;
+	        if(markers.length == 1){
+	        	var lname="我的派送区域";
+	        	var opt = {position:point,offset: new BMap.Size(0, 0)};
+				var label = new BMap.Label(lname, opt);
+				map.addOverlay(label);
+	        }
+	        map.addOverlay(marker);
+	        // console.log(markers)
+	    }
+
+	    //绘制一个多边形
+	    function drawPolygon(markers,map){
+	    	var points = [];
+			for (var i = markers.length - 1; i >= 0; i--) {
+				var point = markers[i]["point"];
+				points.push(point);
+			}
+			if(points.length > 2){
+	            map.removeOverlay(polygon);
+	        }
+	    	var styleOptions = {
+		        strokeColor:"red",    	//边线颜色。
+		        fillColor:"pink",      	//填充颜色。当参数为空时，圆形将没有填充效果。
+		        strokeWeight: 1,       	//边线的宽度，以像素为单位。
+		        strokeOpacity: 0.8,	   	//边线透明度，取值范围0 - 1。
+		        fillOpacity: 0.6,      	//填充的透明度，取值范围0 - 1。
+		        strokeStyle: 'solid' 	//边线的样式，solid或dashed。
+		    }
+	    	polygon = new BMap.Polygon(points, styleOptions);  //创建多边形
+	    	map.addOverlay(polygon);
+	    }
+
+	    function ZoomControl(){
+		  	// 默认停靠位置和偏移量
+		  	this.defaultAnchor = BMAP_ANCHOR_TOP_LEFT;
+		  	this.defaultOffset = new BMap.Size(10, 10);
+		}
+
+		// 通过JavaScript的prototype属性继承于BMap.Control
+		ZoomControl.prototype = new BMap.Control();
+
+		// 自定义控件必须实现自己的initialize方法,并且将控件的DOM元素返回
+		// 在本方法中创建个div元素作为控件的容器,并将其添加到地图容器中
+		ZoomControl.prototype.initialize = function(map){
+		  	// 创建一个DOM元素
+		  	var div1 = document.createElement("div");
+		  	// 添加文字说明
+		  	div1.appendChild(document.createTextNode("开始绘制"));
+		  	// 设置样式
+		  	div1.style.cursor = "pointer";
+		  	div1.style.border = "1px solid gray";
+		  	div1.style.backgroundColor = "red";
+		  	var draw = function draw(e){
+				var center = map.getCenter();
+				console.log("当前位置为：" + e.point.lng + "," + e.point.lat);
+				var address = [e.point.lng,e.point.lat];
+				var point = new BMap.Point(e.point.lng,e.point.lat);
+				markers.push({"address":address,"point":point,"marker":null});
+				addMarker(point);
+		        drawPolygon(markers,map);
+			}
+
+			var draw1 = function draw1(e){
+				var center = map.getCenter();
+				console.log("当前位置为：" + e.point.lng + "," + e.point.lat);
+				// var address = [e.point.lng,e.point.lat];
+				var point = new BMap.Point(e.point.lng,e.point.lat);
+				// markers.push({"address":address,"point":point,"marker":null});
+				addMarker(point);
+		        // drawPolygon(markers,map);
+		        isPointInPolygon(point);
+			}
+		  	// 绑定事件
+		  	div1.onclick = function(e){
+				// map.setZoom(map.getZoom() + 2);//点击一次放大两级
+				if(this.innerHTML == '开始绘制'){
+					this.innerHTML = '结束绘制';
+					map.addEventListener('click',draw);
+					map.removeEventListener('click',draw1)
+				}else{
+					this.innerHTML = '开始绘制';
+					map.removeEventListener('click',draw)
+					// map.addEventListener('click',draw1)
+				}
+		  	}
+
+		  	// 创建一个DOM元素
+		  	var div2 = document.createElement("div");
+		  	// 添加文字说明
+		  	div2.appendChild(document.createTextNode("开始测试"));
+		  	// 设置样式
+		  	div2.style.cursor = "pointer";
+		  	div2.style.border = "1px solid gray";
+		  	div2.style.backgroundColor = "red";
+		  	// 绑定事件
+		  	div2.onclick = function(e){
+				// map.setZoom(map.getZoom() - 2);//点击一次放大两级
+				map.addEventListener('click',draw1);
+				map.removeEventListener('click',draw)
+				div1.innerHTML = '开始绘制';
+		  	}
+
+		  	var div = document.createElement("div");
+		  	div.appendChild(div1);
+		  	div.appendChild(div2);
+		  	// 添加DOM元素到地图中
+		  	map.getContainer().appendChild(div);
+		  	// 将DOM元素返回
+		  	return div;
+		}
+		// 创建控件
+		var myZoomCtrl = new ZoomControl();
+		// 添加到地图当中
+		map.addControl(myZoomCtrl);
+	</script>
+</body>
+</html>

@@ -5,10 +5,13 @@
 	<title>判断一个点是否在一片区域内</title>
 	<style type="text/css">
 		body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+		#allmap{height:100%;width:100%;}
+		#r-result{width:100%;}
 	</style>
 </head>
 <body>
 	<div id="allmap"></div>
+	<div id="searchResultPanel" style="border:1px solid #C0C0C0;width:150px;height:auto; display:none;"></div>
 	<script src="http://api.map.baidu.com/api?v=2.0&ak=VBTSXF5Ew7qi3oniGRcWHyLwZ2Dl6Xcv"></script>
 	<!-- <script src="http://api.map.baidu.com/library/GeoUtils/1.2/src/GeoUtils_min.js"></script> -->
 	<script src="GeoUtils.js"></script>
@@ -28,11 +31,23 @@
 	            BMAP_HYBRID_MAP
 	        ]}));
 		map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
-		// var mypoint = new BMap.Point(117.339937,31.870068);//定义一个坐标对象
+		var mypoint = new BMap.Point(117.339937,31.870068);//定义一个坐标对象
 
 		// //初始化地图的中心位置
-	 	//    map.centerAndZoom(mypoint, 14);
-	 	map.centerAndZoom('合肥',14);
+	 	   map.centerAndZoom(mypoint, 14);
+	 	// map.centerAndZoom('合肥',14);
+	 	var geolocation = new BMap.Geolocation();
+		geolocation.getCurrentPosition(function(r){
+			if(this.getStatus() == BMAP_STATUS_SUCCESS){
+				// var mk = new BMap.Marker(r.point);
+				// map.addOverlay(mk);
+				map.panTo(r.point);
+				// alert('您的位置：'+r.point.lng+','+r.point.lat);
+			}else {
+				alert('failed'+this.getStatus());
+			}        
+		},{enableHighAccuracy: true})
+
 		// 判断一个点是否在一片区域内
 		function isPointInPolygon(point){
 			var styleOptions = {
@@ -88,8 +103,42 @@
 				var location = this.location;
 				markers[location]["address"] = address;
 				markers[location]["point"] = point;
-	        	drawPolygon(markers,map);//重新绘制一个多边形
+        		drawPolygon(markers,map);//重新绘制一个多边形
+        		console.log(markers);
 	        });
+
+	        //右击删除当前Marker
+	        marker.addEventListener("rightclick", function(e){
+	        	var m = this;
+	        	s = e.point.lng;//经度
+           	 	w = e.point.lat;//维度
+	        	if(e.overlay){//判断右键单击的是否是marker
+	            }else{
+	          //   	console.log(3333)
+	          //   	var EventMarker = function(map){
+			        // //addEventF是具体的菜单方法，要实现什么功能取决自身需求
+			        // 	addEventF();
+			        // };
+			        // var addEventF = function(){
+			        	var ll = m.location;
+			        	m.remove();
+			        	markers.splice(ll,1);
+			        	for (var i = markers.length - 1; i >= 0; i--) {
+			        		if(i >= ll){
+			        			markers[i]['marker']['location'] -= 1;
+			        		}
+			        	}
+			        	drawPolygon(markers,map);//重新绘制一个多边形
+						console.log(markers);
+			        // }
+
+			        // var markerMenu = new BMap.ContextMenu();
+			        // markerMenu.addItem(new BMap.MenuItem('删除标签',EventMarker.bind(map),{width:57}));
+			        // m.addContextMenu(markerMenu);//给标记添加右键菜单
+	            }
+	        });
+
+
 	        markers[markers.length - 1]["marker"] = marker;
 	        if(markers.length == 1){
 	   //      	var lname="我的派送区域";
@@ -108,9 +157,7 @@
 				var point = markers[i]["point"];
 				points.push(point);
 			}
-			if(points.length > 2){
-	            map.removeOverlay(polygon);
-	        }
+            map.removeOverlay(polygon);//删除之前绘制的多边形
 	    	var styleOptions = {
 		        strokeColor:"red",    	//边线颜色。
 		        fillColor:"pink",      	//填充颜色。当参数为空时，圆形将没有填充效果。
@@ -135,7 +182,8 @@
 		// 自定义控件必须实现自己的initialize方法,并且将控件的DOM元素返回
 		// 在本方法中创建个div元素作为控件的容器,并将其添加到地图容器中
 		ZoomControl.prototype.initialize = function(map){
-		  	// 创建一个DOM元素
+
+		  	// 创建一个DOM元素，开始绘制
 		  	var div1 = document.createElement("div");
 		  	// 添加文字说明
 		  	div1.appendChild(document.createTextNode("开始绘制"));
@@ -143,6 +191,34 @@
 		  	div1.style.cursor = "pointer";
 		  	div1.style.border = "1px solid gray";
 		  	div1.style.backgroundColor = "red";
+		  	// 绑定事件
+		  	div1.onclick = function(e){
+				if(this.innerHTML == '开始绘制'){
+					this.innerHTML = '结束绘制';
+					map.addEventListener('click',draw);
+					map.removeEventListener('click',test)
+				}else{
+					this.innerHTML = '开始绘制';
+					map.removeEventListener('click',draw)
+					// map.addEventListener('click',test)
+				}
+		  	}
+
+		  	// 创建一个DOM元素，开始测试
+		  	var div2 = document.createElement("div");
+		  	// 添加文字说明
+		  	div2.appendChild(document.createTextNode("开始测试"));
+		  	// 设置样式
+		  	div2.style.cursor = "pointer";
+		  	div2.style.border = "1px solid gray";
+		  	// div2.style.backgroundColor = "#2e77e5";
+		  	// 绑定事件
+		  	div2.onclick = function(e){
+				map.addEventListener('click',test);
+				map.removeEventListener('click',draw)
+				div1.innerHTML = '开始绘制';
+		  	}
+
 		  	var draw = function draw(e){
 				var center = map.getCenter();
 				console.log("当前位置为：" + e.point.lng + "," + e.point.lat);
@@ -153,45 +229,13 @@
 		        drawPolygon(markers,map);
 			}
 
-			var draw1 = function draw1(e){
+			var test = function test(e){
 				var center = map.getCenter();
 				console.log("当前位置为：" + e.point.lng + "," + e.point.lat);
-				// var address = [e.point.lng,e.point.lat];
 				var point = new BMap.Point(e.point.lng,e.point.lat);
-				// markers.push({"address":address,"point":point,"marker":null});
 				addMarker(point);
-		        // drawPolygon(markers,map);
 		        isPointInPolygon(point);
 			}
-		  	// 绑定事件
-		  	div1.onclick = function(e){
-				// map.setZoom(map.getZoom() + 2);//点击一次放大两级
-				if(this.innerHTML == '开始绘制'){
-					this.innerHTML = '结束绘制';
-					map.addEventListener('click',draw);
-					map.removeEventListener('click',draw1)
-				}else{
-					this.innerHTML = '开始绘制';
-					map.removeEventListener('click',draw)
-					// map.addEventListener('click',draw1)
-				}
-		  	}
-
-		  	// 创建一个DOM元素
-		  	var div2 = document.createElement("div");
-		  	// 添加文字说明
-		  	div2.appendChild(document.createTextNode("开始测试"));
-		  	// 设置样式
-		  	div2.style.cursor = "pointer";
-		  	div2.style.border = "1px solid gray";
-		  	div2.style.backgroundColor = "red";
-		  	// 绑定事件
-		  	div2.onclick = function(e){
-				// map.setZoom(map.getZoom() - 2);//点击一次放大两级
-				map.addEventListener('click',draw1);
-				map.removeEventListener('click',draw)
-				div1.innerHTML = '开始绘制';
-		  	}
 
 		  	var div = document.createElement("div");
 		  	div.appendChild(div1);
@@ -201,117 +245,209 @@
 		  	// 将DOM元素返回
 		  	return div;
 		}
+
+		function ZoomControl1(){
+		  	// 默认停靠位置和偏移量
+		  	this.defaultAnchor = BMAP_ANCHOR_TOP_LEFT;
+		  	this.defaultOffset = new BMap.Size(document.body.clientWidth/2-150, 10);
+		}
+		// 通过JavaScript的prototype属性继承于BMap.Control
+		ZoomControl1.prototype = new BMap.Control();
+
+		// 自定义控件必须实现自己的initialize方法,并且将控件的DOM元素返回
+		// 在本方法中创建个div元素作为控件的容器,并将其添加到地图容器中
+		ZoomControl1.prototype.initialize = function(map){
+		  	// 创建一个DOM元素，搜索框
+		  	var div3 = document.createElement("div");
+		  	var input = document.createElement('input');
+			input.setAttribute('type', 'text');
+			input.setAttribute('size', '20');
+			input.setAttribute('id', 'suggestId');
+			input.setAttribute('placeholder', '输入位置自动搜索');
+			input.setAttribute('style', 'width:300px;height:30px;border-left:10px solid #fff;');
+		  	// 添加文字说明
+		  	div3.appendChild(input);
+		  	// 设置样式
+		  	div3.style.width = "300px";
+		  	div3.style.height = "40px";
+		  	div3.setAttribute('style', 'border:1px solid #ddd;')
+		  	// 绑定事件
+
+		  	var div = document.createElement("div");
+		  	div.appendChild(div3);
+		  	// 添加DOM元素到地图中
+		  	map.getContainer().appendChild(div);
+		  	// 将DOM元素返回
+		  	return div;
+		}
 		// 创建控件
 		var myZoomCtrl = new ZoomControl();
+		var myZoomCtrl1 = new ZoomControl1();
 		// 添加到地图当中
 		map.addControl(myZoomCtrl);
+		map.addControl(myZoomCtrl1);
 
-		/********点是否在矩形内*******/
-		var isPointInRect = function(point){
-			var sw = {lng:12.22,lat:133.33};
-			var ne = {lng:14.44,lat:155.55};
-			return (point.lng >= sw.lng && point.lng <= ne.lng && point.lat >= sw.lat && point.lat <= ne.lat);
+
+
+		/*关键字检索位置功能-开始*/
+		function G(id) {
+			return document.getElementById(id);
 		}
-		var res = isPointInRect({lng:12.20,lat:133.63});
-		// console.log(res);
+		var ac = new BMap.Autocomplete(    //建立一个自动完成的对象
+			{"input" : "suggestId"
+			,"location" : map
+		});
 
-		/********点是否在多边形内*******/
-		var isPointInPolygons = function(point, polygon){
-	     //检查类型
-	     // if(!(point instanceof BMap.Point) ||
-	     //     !(polygon instanceof BMap.Polygon)){
-	     //     return false;
-	     // }
+		ac.addEventListener("onhighlight", function(e) {  //鼠标放在下拉列表上的事件
+		var str = "";
+			var _value = e.fromitem.value;
+			var value = "";
+			if (e.fromitem.index > -1) {
+				value = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+			}    
+			str = "FromItem<br />index = " + e.fromitem.index + "<br />value = " + value;
+			
+			value = "";
+			if (e.toitem.index > -1) {
+				_value = e.toitem.value;
+				value = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+			}    
+			str += "<br />ToItem<br />index = " + e.toitem.index + "<br />value = " + value;
+			G("searchResultPanel").innerHTML = str;
+		});
 
-	     //首先判断点是否在多边形的外包矩形内，如果在，则进一步判断，否则返回false
-	     // var polygonBounds = polygon.getBounds();
-	     // if(!this.isPointInRect(point, polygonBounds)){
-	     //     return false;
-	     // }
+		var myValue;
+		ac.addEventListener("onconfirm", function(e) {    //鼠标点击下拉列表后的事件
+		var _value = e.item.value;
+			myValue = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+			G("searchResultPanel").innerHTML ="onconfirm<br />index = " + e.item.index + "<br />myValue = " + myValue;
+			
+			setPlace();
+		});
 
-	     // var pts = polygon.getPath();//获取多边形点
-	     var pts = [
-	     	{"lng":117.179543,"lat":31.804793},
-	     	{"lng":117.197509,"lat":31.819521},
-	     	{"lng":117.198371,"lat":31.806634},
-	     	{"lng":117.20527,"lat":31.819153},
-	     	{"lng":117.211738,"lat":31.810316},
-	     	{"lng":117.219212,"lat":31.82308},
-	     	{"lng":117.161864,"lat":31.813139},
-	     	{"lng":117.193484,"lat":31.837193},
-	     ];
+		function setPlace(){
+			// map.clearOverlays();    //清除地图上所有覆盖物
+			function myFun(){
+				var pp = local.getResults().getPoi(0).point;    //获取第一个智能搜索的结果
+				map.centerAndZoom(pp, 18);
+				// map.addOverlay(new BMap.Marker(pp));    //添加标注
+			}
+			var local = new BMap.LocalSearch(map, { //智能搜索
+			  onSearchComplete: myFun
+			});
+			local.search(myValue);
+		}
+		/*关键字检索位置功能-结束*/
+
+
+
+
+		// /********点是否在矩形内*******/
+		// var isPointInRect = function(point){
+		// 	var sw = {lng:12.22,lat:133.33};
+		// 	var ne = {lng:14.44,lat:155.55};
+		// 	return (point.lng >= sw.lng && point.lng <= ne.lng && point.lat >= sw.lat && point.lat <= ne.lat);
+		// }
+		// var res = isPointInRect({lng:12.20,lat:133.63});
+		// // console.log(res);
+
+		// /********点是否在多边形内*******/
+		// var isPointInPolygons = function(point, polygon){
+	 //     //检查类型
+	 //     // if(!(point instanceof BMap.Point) ||
+	 //     //     !(polygon instanceof BMap.Polygon)){
+	 //     //     return false;
+	 //     // }
+
+	 //     //首先判断点是否在多边形的外包矩形内，如果在，则进一步判断，否则返回false
+	 //     // var polygonBounds = polygon.getBounds();
+	 //     // if(!this.isPointInRect(point, polygonBounds)){
+	 //     //     return false;
+	 //     // }
+
+	 //     // var pts = polygon.getPath();//获取多边形点
+	 //     var pts = [
+	 //     	{"lng":117.179543,"lat":31.804793},
+	 //     	{"lng":117.197509,"lat":31.819521},
+	 //     	{"lng":117.198371,"lat":31.806634},
+	 //     	{"lng":117.20527,"lat":31.819153},
+	 //     	{"lng":117.211738,"lat":31.810316},
+	 //     	{"lng":117.219212,"lat":31.82308},
+	 //     	{"lng":117.161864,"lat":31.813139},
+	 //     	{"lng":117.193484,"lat":31.837193},
+	 //     ];
 	     
-	     //下述代码来源：http://paulbourke.net/geometry/insidepoly/，进行了部分修改
-	     //基本思想是利用射线法，计算射线与多边形各边的交点，如果是偶数，则点在多边形外，否则
-	     //在多边形内。还会考虑一些特殊情况，如点在多边形顶点上，点在多边形边上等特殊情况。
+	 //     //下述代码来源：http://paulbourke.net/geometry/insidepoly/，进行了部分修改
+	 //     //基本思想是利用射线法，计算射线与多边形各边的交点，如果是偶数，则点在多边形外，否则
+	 //     //在多边形内。还会考虑一些特殊情况，如点在多边形顶点上，点在多边形边上等特殊情况。
 	     
-	     var N = pts.length;
-	     var boundOrVertex = true; //如果点位于多边形的顶点或边上，也算做点在多边形内，直接返回true
-	     var intersectCount = 0;//cross points count of x 
-	     var precision = 2e-10; //浮点类型计算时候与0比较时候的容差
-	     var p1, p2;//neighbour bound vertices
-	     var p = point; //测试点
+	 //     var N = pts.length;
+	 //     var boundOrVertex = true; //如果点位于多边形的顶点或边上，也算做点在多边形内，直接返回true
+	 //     var intersectCount = 0;//cross points count of x 
+	 //     var precision = 2e-10; //浮点类型计算时候与0比较时候的容差
+	 //     var p1, p2;//neighbour bound vertices
+	 //     var p = point; //测试点
 	     
-	     p1 = pts[0];//left vertex        
-	     for(var i = 1; i <= N; ++i){//check all rays            
-	         // if(p.equals(p1)){
-	         //     return boundOrVertex;//p is an vertex
-	         // }
+	 //     p1 = pts[0];//left vertex        
+	 //     for(var i = 1; i <= N; ++i){//check all rays            
+	 //         // if(p.equals(p1)){
+	 //         //     return boundOrVertex;//p is an vertex
+	 //         // }
 	         
-	         p2 = pts[i % N];//right vertex            
-	         if(p.lat < Math.min(p1.lat, p2.lat) || p.lat > Math.max(p1.lat, p2.lat)){//ray is outside of our interests                
-	             p1 = p2; 
-	             continue;//next ray left point
-	         }
+	 //         p2 = pts[i % N];//right vertex            
+	 //         if(p.lat < Math.min(p1.lat, p2.lat) || p.lat > Math.max(p1.lat, p2.lat)){//ray is outside of our interests                
+	 //             p1 = p2; 
+	 //             continue;//next ray left point
+	 //         }
 	         
-	         if(p.lat > Math.min(p1.lat, p2.lat) && p.lat < Math.max(p1.lat, p2.lat)){//ray is crossing over by the algorithm (common part of)
-	             if(p.lng <= Math.max(p1.lng, p2.lng)){//x is before of ray                    
-	                 if(p1.lat == p2.lat && p.lng >= Math.min(p1.lng, p2.lng)){//overlies on a horizontal ray
-	                     return boundOrVertex;
-	                 }
+	 //         if(p.lat > Math.min(p1.lat, p2.lat) && p.lat < Math.max(p1.lat, p2.lat)){//ray is crossing over by the algorithm (common part of)
+	 //             if(p.lng <= Math.max(p1.lng, p2.lng)){//x is before of ray                    
+	 //                 if(p1.lat == p2.lat && p.lng >= Math.min(p1.lng, p2.lng)){//overlies on a horizontal ray
+	 //                     return boundOrVertex;
+	 //                 }
 	                 
-	                 if(p1.lng == p2.lng){//ray is vertical                        
-	                     if(p1.lng == p.lng){//overlies on a vertical ray
-	                         return boundOrVertex;
-	                     }else{//before ray
-	                         ++intersectCount;
-	                     } 
-	                 }else{//cross point on the left side                        
-	                     var xinters = (p.lat - p1.lat) * (p2.lng - p1.lng) / (p2.lat - p1.lat) + p1.lng;//cross point of lng                        
-	                     if(Math.abs(p.lng - xinters) < precision){//overlies on a ray
-	                         return boundOrVertex;
-	                     }
+	 //                 if(p1.lng == p2.lng){//ray is vertical                        
+	 //                     if(p1.lng == p.lng){//overlies on a vertical ray
+	 //                         return boundOrVertex;
+	 //                     }else{//before ray
+	 //                         ++intersectCount;
+	 //                     } 
+	 //                 }else{//cross point on the left side                        
+	 //                     var xinters = (p.lat - p1.lat) * (p2.lng - p1.lng) / (p2.lat - p1.lat) + p1.lng;//cross point of lng                        
+	 //                     if(Math.abs(p.lng - xinters) < precision){//overlies on a ray
+	 //                         return boundOrVertex;
+	 //                     }
 	                     
-	                     if(p.lng < xinters){//before ray
-	                         ++intersectCount;
-	                     } 
-	                 }
-	             }
-	         }else{//special case when ray is crossing through the vertex                
-	             if(p.lat == p2.lat && p.lng <= p2.lng){//p crossing over p2                    
-	                 var p3 = pts[(i+1) % N]; //next vertex                    
-	                 if(p.lat >= Math.min(p1.lat, p3.lat) && p.lat <= Math.max(p1.lat, p3.lat)){//p.lat lies between p1.lat & p3.lat
-	                     ++intersectCount;
-	                 }else{
-	                     intersectCount += 2;
-	                 }
-	             }
-	         }            
-	         p1 = p2;//next ray left point
-	     }
-	     console.log(intersectCount)
-	     if(intersectCount % 2 == 0){//偶数在多边形外
-	         return false;
-	     } else { //奇数在多边形内
-	         return true;
-	     }            
- 	}
- 	var pp1 = {"lng":117.181196,"lat":31.81406};//外6
- 	var pp2 = {"lng":117.188598,"lat":31.816085};//内5
- 	var pp3 = {"lng":117.213103,"lat":31.815655};//内5
- 	var pp4 = {"lng":117.19873,"lat":31.80915};//外
- 	var res2 = isPointInPolygons(pp2);
- 	console.log(res2)
+	 //                     if(p.lng < xinters){//before ray
+	 //                         ++intersectCount;
+	 //                     } 
+	 //                 }
+	 //             }
+	 //         }else{//special case when ray is crossing through the vertex                
+	 //             if(p.lat == p2.lat && p.lng <= p2.lng){//p crossing over p2                    
+	 //                 var p3 = pts[(i+1) % N]; //next vertex                    
+	 //                 if(p.lat >= Math.min(p1.lat, p3.lat) && p.lat <= Math.max(p1.lat, p3.lat)){//p.lat lies between p1.lat & p3.lat
+	 //                     ++intersectCount;
+	 //                 }else{
+	 //                     intersectCount += 2;
+	 //                 }
+	 //             }
+	 //         }            
+	 //         p1 = p2;//next ray left point
+	 //     }
+	 //     console.log(intersectCount)
+	 //     if(intersectCount % 2 == 0){//偶数在多边形外
+	 //         return false;
+	 //     } else { //奇数在多边形内
+	 //         return true;
+	 //     }            
+ 	// }
+ 	// var pp1 = {"lng":117.181196,"lat":31.81406};//外6
+ 	// var pp2 = {"lng":117.188598,"lat":31.816085};//内5
+ 	// var pp3 = {"lng":117.213103,"lat":31.815655};//内5
+ 	// var pp4 = {"lng":117.19873,"lat":31.80915};//外
+ 	// var res2 = isPointInPolygons(pp2);
+ 	// console.log(res2)
 	</script>
 </body>
 </html>

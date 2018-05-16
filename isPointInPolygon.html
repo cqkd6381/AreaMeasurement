@@ -13,8 +13,8 @@
 	<div id="allmap"></div>
 	<div id="searchResultPanel" style="border:1px solid #C0C0C0;width:150px;height:auto; display:none;"></div>
 	<script src="http://api.map.baidu.com/api?v=2.0&ak=VBTSXF5Ew7qi3oniGRcWHyLwZ2Dl6Xcv"></script>
-	<!-- <script src="http://api.map.baidu.com/library/GeoUtils/1.2/src/GeoUtils_min.js"></script> -->
-	<script src="GeoUtils.js"></script>
+	<script src="http://api.map.baidu.com/library/GeoUtils/1.2/src/GeoUtils_min.js"></script>
+	<!-- <script src="GeoUtils.js"></script> -->
 	<!-- <script src="http://api.map.baidu.com/library/GeoUtils/1.2/docs/symbols/src/BMapLib_GeoUtils.js.html"></script> -->
 	<script>
 	    var polygon;
@@ -31,11 +31,11 @@
 	            BMAP_HYBRID_MAP
 	        ]}));
 		map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
-		var mypoint = new BMap.Point(117.339937,31.870068);//定义一个坐标对象
+		// var mypoint = new BMap.Point(117.339937,31.870068);//定义一个坐标对象
 
 		// //初始化地图的中心位置
-	 	   map.centerAndZoom(mypoint, 14);
-	 	// map.centerAndZoom('合肥',14);
+	 	   // map.centerAndZoom(mypoint, 14);
+	 	map.centerAndZoom('合肥',14);
 	 	var geolocation = new BMap.Geolocation();
 		geolocation.getCurrentPosition(function(r){
 			if(this.getStatus() == BMAP_STATUS_SUCCESS){
@@ -219,6 +219,26 @@
 				div1.innerHTML = '开始绘制';
 		  	}
 
+		  	// 创建一个DOM元素，清除所有绘制
+		  	var div3 = document.createElement("div");
+		  	// 添加文字说明
+		  	div3.appendChild(document.createTextNode("清除绘制"));
+		  	// 设置样式
+		  	div3.style.cursor = "pointer";
+		  	div3.style.border = "1px solid gray";
+		  	div3.style.backgroundColor = "red";
+		  	// 绑定事件
+		  	div3.onclick = function(e){
+				div1.innerHTML = '开始绘制';
+				map.removeEventListener('click',draw);
+				map.removeEventListener('click',test);
+				markers = [];
+				map.clearOverlays();
+				drawPolygon(markers,map);
+		  	}
+
+
+
 		  	var draw = function draw(e){
 				var center = map.getCenter();
 				console.log("当前位置为：" + e.point.lng + "," + e.point.lat);
@@ -240,6 +260,7 @@
 		  	var div = document.createElement("div");
 		  	div.appendChild(div1);
 		  	div.appendChild(div2);
+		  	div.appendChild(div3);
 		  	// 添加DOM元素到地图中
 		  	map.getContainer().appendChild(div);
 		  	// 将DOM元素返回
@@ -258,7 +279,7 @@
 		// 在本方法中创建个div元素作为控件的容器,并将其添加到地图容器中
 		ZoomControl1.prototype.initialize = function(map){
 		  	// 创建一个DOM元素，搜索框
-		  	var div3 = document.createElement("div");
+		  	var div4 = document.createElement("div");
 		  	var input = document.createElement('input');
 			input.setAttribute('type', 'text');
 			input.setAttribute('size', '20');
@@ -266,15 +287,15 @@
 			input.setAttribute('placeholder', '输入位置自动搜索');
 			input.setAttribute('style', 'width:300px;height:30px;border-left:10px solid #fff;');
 		  	// 添加文字说明
-		  	div3.appendChild(input);
+		  	div4.appendChild(input);
 		  	// 设置样式
-		  	div3.style.width = "300px";
-		  	div3.style.height = "40px";
-		  	div3.setAttribute('style', 'border:1px solid #ddd;')
+		  	div4.style.width = "300px";
+		  	div4.style.height = "40px";
+		  	div4.setAttribute('style', 'border:1px solid #ddd;')
 		  	// 绑定事件
 
 		  	var div = document.createElement("div");
-		  	div.appendChild(div3);
+		  	div.appendChild(div4);
 		  	// 添加DOM元素到地图中
 		  	map.getContainer().appendChild(div);
 		  	// 将DOM元素返回
